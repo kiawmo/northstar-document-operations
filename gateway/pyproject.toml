@@ -13,7 +13,7 @@ readme = "README.md"
 dependencies = ["fastapi==0.143.0", "pydantic==2.14.0", "uvicorn==0.53.0", "httpx==0.28.1", "jsonschema==4.25.1", "psutil==7.0.0"]
 
 [project.optional-dependencies]
-test = ["pytest==9.0.3", "ruff==0.14.0"]
+test = ["pytest==9.0.3", "ruff==0.17.1"]
 
 [project.scripts]
 llm-gateway = "llm_gateway.cli:main"
