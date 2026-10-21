@@ -1,7 +1,11 @@
 name: Validate
 on:
   push:
+    branches: [main]
   pull_request:
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -26,7 +30,7 @@ jobs:
       - name: Gateway contracts
         run: docker compose run --rm gateway-test
       - name: Lint
-        run: docker compose run --rm test python -m ruff check docops tests scripts
+        run: docker compose run --rm test python -m ruff check --no-cache docops tests scripts
       - name: Deterministic extraction and failure recovery
         run: |
           docker compose run --rm --no-deps -w /tmp test python -m docops demo --llm fixture --database sqlite:////tmp/demo.db
