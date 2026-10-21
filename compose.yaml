@@ -2,7 +2,7 @@ name: northstar
 x-document: &document
   init: true
   image: northstar-docops:local
-  build:
+  build: &document-build
     context: .
     target: runtime
     args:
@@ -117,6 +117,7 @@ services:
   parser:
     init: true
     image: northstar-docops:local
+    build: *document-build
     command: [python, -m, docops.parser_api]
     restart: unless-stopped
     read_only: true
