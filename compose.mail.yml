@@ -1,0 +1,12 @@
+services:
+  api:
+    networks: [private, gateway, ingress]
+    environment:
+      DOCUMENT_MAIL_PROFILE_FILE: /run/mail-secrets/mail.json
+    volumes: ["${DOCUMENT_MAIL_SECRETS_DIR:?Set DOCUMENT_MAIL_SECRETS_DIR}:/run/mail-secrets:ro"]
+  worker:
+    networks: [private, gateway, outbound]
+    environment:
+      DOCUMENT_MAIL_PROFILE_FILE: /run/mail-secrets/mail.json
+      DOCUMENT_INBOX_POLL_SECONDS: "60"
+    volumes: ["${DOCUMENT_MAIL_SECRETS_DIR:?Set DOCUMENT_MAIL_SECRETS_DIR}:/run/mail-secrets:ro"]

@@ -1,0 +1,17 @@
+include README.md LICENSE SECURITY.md CONTRIBUTING.md CHANGELOG.md THIRD_PARTY_NOTICES.md
+include requirements*.txt requirements*.lock pyproject.toml Dockerfile compose*.yml compose.yaml .env.example
+include .gitignore .gitattributes .dockerignore mail-profile.example.json
+recursive-include docops/static *
+recursive-include tests *.py
+recursive-include scripts *.py
+recursive-include docs *.md *.svg *.json *.jpg
+recursive-include assets *.svg
+recursive-include fixtures *.txt *.eml *.pdf *.png
+recursive-include containers *.sh *.c
+recursive-include containers Dockerfile .dockerignore
+recursive-include gateway *.py *.toml *.txt *.lock Dockerfile *.md .dockerignore
+recursive-include gateway LICENSE
+recursive-include gateway .env.example
+recursive-include .github *.yml *.md
+include .github/CODEOWNERS
+global-exclude __pycache__ *.py[cod]

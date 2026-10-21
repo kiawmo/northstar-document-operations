@@ -1,0 +1,13 @@
+Northstar Office Supply - Synthetic Demonstration Invoice
+Vendor: Northstar Office Supply
+Invoice: NS-1047
+Invoice date: 2026-10-01
+Due date: 2026-10-31
+Currency: USD
+Subtotal: 200.00
+Tax: 20.00
+Total: 220.00
+PO: PO-2026-17
+Confidence: 0.97
+Item: Office supplies | 2 | 100.00 | 200.00
+

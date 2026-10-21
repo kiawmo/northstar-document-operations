@@ -1,0 +1,7 @@
+services:
+  llm-gateway:
+    command: [python, -m, llm_gateway.container]
+    secrets: [codex_auth]
+secrets:
+  codex_auth:
+    file: ${CODEX_AUTH_FILE:?Set CODEX_AUTH_FILE to your private authenticated Codex auth.json}

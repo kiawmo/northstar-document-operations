@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+.secrets
+.env
+.env.*
+data
+evidence
+artifacts
+dist
+build
+gateway
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+*.db*
+auth.json

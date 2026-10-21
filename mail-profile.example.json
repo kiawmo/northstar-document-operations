@@ -1,0 +1,5 @@
+{
+  "client_id": "northstar",
+  "imap": {"host": "imap.gmail.com", "port": 993, "folder": "INBOX", "username": "accounts@your-domain.example", "auth": "google_oauth2", "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID", "client_secret_file": "/run/mail-secrets/client-secret", "refresh_token_file": "/run/mail-secrets/refresh-token"},
+  "smtp": {"host": "smtp.gmail.com", "port": 465, "tls": "implicit", "username": "accounts@your-domain.example", "sender": "accounts@your-domain.example", "recipient": "finance@your-domain.example", "auth": "google_oauth2", "client_id": "YOUR_GOOGLE_OAUTH_CLIENT_ID", "client_secret_file": "/run/mail-secrets/client-secret", "refresh_token_file": "/run/mail-secrets/refresh-token"}
+}

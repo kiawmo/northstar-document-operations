@@ -1,0 +1,27 @@
+From: supplier@northstar.example
+To: accounts@northstar.example
+Subject: Invoice NS-1050
+Message-ID: <synthetic-ns1050@northstar.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============7433066533083697854=="
+
+--===============7433066533083697854==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+Please review the attached synthetic invoice.
+
+--===============7433066533083697854==
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="email-invoice.txt"
+MIME-Version: 1.0
+
+Tm9ydGhzdGFyIE9mZmljZSBTdXBwbHkgLSBTeW50aGV0aWMgRGVtb25zdHJhdGlvbiBJbnZvaWNl
+ClZlbmRvcjogTm9ydGhzdGFyIE9mZmljZSBTdXBwbHkKSW52b2ljZTogTlMtMTA1MApJbnZvaWNl
+IGRhdGU6IDIwMjYtMTAtMDEKRHVlIGRhdGU6IDIwMjYtMTAtMzEKQ3VycmVuY3k6IFVTRApTdWJ0
+b3RhbDogMjAwLjAwClRheDogMjAuMDAKVG90YWw6IDIyMC4wMApQTzogUE8tMjAyNi0xNwpDb25m
+aWRlbmNlOiAwLjk3Ckl0ZW06IE9mZmljZSBzdXBwbGllcyB8IDIgfCAxMDAuMDAgfCAyMDAuMDAK
+Cg==
+
+--===============7433066533083697854==--

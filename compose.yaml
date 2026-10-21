@@ -1,0 +1,200 @@
+name: northstar
+x-document: &document
+  init: true
+  image: northstar-docops:local
+  build:
+    context: .
+    target: runtime
+    args:
+      PYTHON_IMAGE: ${DOCOPS_PYTHON_IMAGE:-python:3.13-slim-trixie@sha256:cf50a4f6ac4f026458b08d5222023d700ac806410dff5e9ca8728fa44f2b850f}
+  restart: unless-stopped
+  read_only: true
+  mem_limit: 1g
+  pids_limit: 128
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=256m,uid=10001,gid=10001"]
+  environment: &document-environment
+    DOCUMENT_DATABASE_URL_FILE: /run/secrets/database_url
+    DOCUMENT_DATABASE_SCHEMA: docops
+    DOCUMENT_API_KEY_FILE: /run/secrets/api_key
+    DOCUMENT_REDIS_URL_FILE: /run/secrets/redis_url
+    DOCUMENT_REDIS_PREFIX: docops:runtime
+    DOCUMENT_LLM_PROVIDER: ${DOCUMENT_LLM_PROVIDER:-gateway}
+    LLM_GATEWAY_URL: http://llm-gateway:8100
+    GATEWAY_API_KEY_FILE: /run/secrets/gateway_api_key
+    DOCUMENT_WORKER_ENABLED: "0"
+    DOCUMENT_PARSER_URL: http://parser
+    DOCUMENT_PARSER_SOCKET: /ipc/parser.sock
+  secrets: [database_url, api_key, redis_url, gateway_api_key]
+  networks: [private, gateway]
+  volumes: ["parser-ipc:/ipc:ro"]
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+    parser: {condition: service_healthy}
+  stop_grace_period: 260s
+services:
+  gateway-test:
+    init: true
+    image: northstar-gateway-test:local
+    profiles: [test]
+    build:
+      context: ./gateway
+      target: test
+    network_mode: none
+    environment:
+      LLM_PROVIDER: fixture
+      GATEWAY_HOST: 127.0.0.1
+    healthcheck: {disable: true}
+  llm-gateway:
+    init: true
+    image: northstar-gateway:local
+    build:
+      context: ./gateway
+      target: runtime
+    command: [python, -m, llm_gateway.cli]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    pids_limit: 128
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001"]
+    environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-codex_cli}
+      GATEWAY_API_KEY_FILE: /run/secrets/gateway_api_key
+      ALLOW_PAID_LLM: "false"
+    secrets: [gateway_api_key]
+    volumes: ["codex-state:/state"]
+    networks: [gateway, outbound]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8100/ready',timeout=3)"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+  api:
+    <<: *document
+    networks: [private, gateway, ingress]
+    ports: ["127.0.0.1:${DOCOPS_PORT:-18113}:8103"]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8103/ready',timeout=2)"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  worker:
+    <<: *document
+    command: [python, -m, docops, worker]
+    healthcheck:
+      test: [CMD, python, -c, "import time; from pathlib import Path; assert time.time()-float(Path('/tmp/worker-heartbeat').read_text())<30"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    environment:
+      <<: *document-environment
+      DOCUMENT_WORKER_ENABLED: "1"
+      DOCUMENT_WORKER_HEARTBEAT_FILE: /tmp/worker-heartbeat
+  test:
+    <<: *document
+    profiles: [test]
+    build:
+      context: .
+      target: test
+      args:
+        PYTHON_IMAGE: ${DOCOPS_PYTHON_IMAGE:-python:3.13-slim-trixie@sha256:cf50a4f6ac4f026458b08d5222023d700ac806410dff5e9ca8728fa44f2b850f}
+    image: northstar-docops-test:local
+    restart: "no"
+    healthcheck: {disable: true}
+    command: [python, -m, pytest, -q, --basetemp=/tmp/docops-tests, -o, cache_dir=/tmp/pytest-cache]
+    environment:
+      <<: *document-environment
+      DOCUMENT_REDIS_PREFIX: docops:test
+      DOCUMENT_LLM_PROVIDER: fixture
+      DOCUMENT_PARSER_URL: ""
+      DOCUMENT_PARSER_SOCKET: ""
+      TEST_DOCUMENT_REDIS_URL_FILE: /run/secrets/redis_url
+      TEST_DOCUMENT_DATABASE_SCHEMA: docops_test
+  parser:
+    init: true
+    image: northstar-docops:local
+    command: [python, -m, docops.parser_api]
+    restart: unless-stopped
+    read_only: true
+    user: "10001:10001"
+    mem_limit: 1g
+    pids_limit: 32
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=128m,uid=10001,gid=10001"]
+    environment:
+      OMP_THREAD_LIMIT: "1"
+    network_mode: none
+    dns: [127.0.0.1]
+    dns_opt: ["timeout:1", "attempts:1"]
+    volumes: ["parser-ipc:/ipc"]
+    healthcheck:
+      test: [CMD, python, -c, "import http.client,socket; c=http.client.HTTPConnection('parser',timeout=2); c.sock=socket.socket(socket.AF_UNIX,socket.SOCK_STREAM); c.sock.settimeout(2); c.sock.connect('/ipc/parser.sock'); c.request('GET','/health'); r=c.getresponse(); assert r.status==200; c.close()"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+  postgres:
+    image: ${DOCOPS_POSTGRES_IMAGE:-northstar-postgres:local}
+    build:
+      context: ./containers/postgres
+    restart: unless-stopped
+    stop_grace_period: 180s
+    environment:
+      POSTGRES_USER: docops_admin
+      POSTGRES_DB: docops
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_admin_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+      PGCTLTIMEOUT: "600"
+    secrets: [postgres_admin_password, postgres_app_password]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./containers/initialize-postgres.sh:/docker-entrypoint-initdb.d/10-docops.sh:ro
+    networks:
+      private:
+        aliases: [p3-postgres]
+    healthcheck:
+      test: [CMD-SHELL, "PGPASSWORD=$$(cat /run/secrets/postgres_app_password) psql -h 127.0.0.1 -U docops -d docops -v ON_ERROR_STOP=1 -tAc 'SELECT 1' | grep -qx 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 300s
+  redis:
+    image: ${DOCOPS_REDIS_IMAGE:-redis:8.2.10-alpine@sha256:b51665e66f00759be7c3152ad5ac3c66fb2f619c13ef62dea7cc1f9914524635}
+    restart: unless-stopped
+    entrypoint: [sh, /opt/docops/start-redis.sh]
+    secrets: [redis_password]
+    volumes:
+      - redis-data:/data
+      - ./containers/start-redis.sh:/opt/docops/start-redis.sh:ro
+    networks:
+      private:
+        aliases: [p3-redis]
+    healthcheck:
+      test: [CMD-SHELL, "REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli ping | grep -q PONG"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+secrets:
+  database_url: {file: "${ROOT_SECRETS_DIR:-./.secrets}/database_url"}
+  api_key: {file: "${ROOT_SECRETS_DIR:-./.secrets}/api_key"}
+  redis_url: {file: "${ROOT_SECRETS_DIR:-./.secrets}/redis_url"}
+  gateway_api_key: {file: "${ROOT_SECRETS_DIR:-./.secrets}/gateway_api_key"}
+  postgres_admin_password: {file: "${ROOT_SECRETS_DIR:-./.secrets}/postgres_admin_password"}
+  postgres_app_password: {file: "${ROOT_SECRETS_DIR:-./.secrets}/postgres_password"}
+  redis_password: {file: "${ROOT_SECRETS_DIR:-./.secrets}/redis_password"}
+volumes:
+  postgres-data:
+  redis-data:
+  parser-ipc:
+  codex-state:
+networks:
+  private:
+    internal: true
+  gateway:
+    internal: true
+  outbound: {}
+  ingress: {}

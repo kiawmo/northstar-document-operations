@@ -1,0 +1,10 @@
+.git
+.venv
+.env
+.env.*
+.secrets
+data
+evidence
+**/__pycache__
+**/*.pyc
+auth.json

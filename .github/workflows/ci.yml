@@ -1,0 +1,51 @@
+name: Validate
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  container-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Bootstrap isolated synthetic configuration
+        run: python3 scripts/bootstrap.py --fixture
+      - name: Build all runtime and test targets
+        run: |
+          docker compose pull --ignore-buildable
+          docker compose build
+          docker compose --profile test build test gateway-test
+      - name: Start and wait for readiness
+        run: docker compose up -d --wait --wait-timeout 300
+      - name: SQLite and authenticated Redis
+        run: docker compose run --rm test
+      - name: PostgreSQL and authenticated Redis
+        run: docker compose run --rm -e TEST_DOCUMENT_DATABASE_URL_FILE=/run/secrets/database_url test
+      - name: Gateway contracts
+        run: docker compose run --rm gateway-test
+      - name: Lint
+        run: docker compose run --rm test python -m ruff check docops tests scripts
+      - name: Deterministic extraction and failure recovery
+        run: |
+          docker compose run --rm --no-deps -w /tmp test python -m docops demo --llm fixture --database sqlite:////tmp/demo.db
+          docker compose run --rm --no-deps -w /tmp test python -m docops chaos --llm fixture --database sqlite:////tmp/chaos.db
+      - name: API smoke, restart and restore
+        run: |
+          python3 scripts/smoke.py
+          python3 scripts/validate_containers.py
+      - name: Clean disposable CI resources
+        if: always()
+        run: docker compose --profile test down -v
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Audit complete locked production dependencies
+        run: |
+          python3 -m venv /tmp/northstar-audit
+          /tmp/northstar-audit/bin/pip install pip-audit==2.10.1
+          /tmp/northstar-audit/bin/pip-audit --disable-pip --no-deps -r requirements.lock
+          /tmp/northstar-audit/bin/pip-audit --disable-pip --no-deps -r gateway/requirements.lock

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Document operations: durable processing and controlled recovery</title>
+  <desc id="desc">A private authenticated API saves source documents in PostgreSQL. A separate worker validates extracted invoices using Tesseract and an authenticated shared gateway. Safe invoices register automatically; uncertain or invalid invoices require review. Registration and the acknowledgment outbox commit together. Redis provides wakeups and worker heartbeats; SQL polling remains available during Redis failure.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0L10 4L0 8Z" fill="#236b64"/></marker>
+    <style>text{font-family:Arial,sans-serif;fill:#182f37}.title{font-size:36px;font-weight:700}.subtitle{font-size:20px;fill:#52656c}.group{font-size:17px;font-weight:700;letter-spacing:1.5px;fill:#52656c}.label{font-size:23px;font-weight:700}.detail{font-size:18px;fill:#52656c}.small{font-size:16px;fill:#52656c}.box{fill:#fff;stroke:#c6d4d2;stroke-width:2}.flow{fill:none;stroke:#236b64;stroke-width:3;marker-end:url(#arrow)}.signal{fill:none;stroke:#848f9b;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#arrow)}</style>
+  </defs>
+  <rect width="1440" height="1000" fill="#f5f3ed"/>
+  <rect x="0" y="0" width="12" height="1000" fill="#236b64"/>
+  <text x="60" y="72" class="title">Invoice and inbox operations</text>
+  <text x="60" y="112" class="subtitle">Durable records, explicit business checks, and an operator-visible recovery path</text>
+  <rect x="40" y="153" width="1030" height="655" rx="20" fill="#eaf1ed" stroke="#b5ccc4" stroke-width="2"/>
+  <text x="64" y="185" class="group">PRIVATE DOCUMENT SERVICES</text>
+  <rect x="1100" y="153" width="300" height="390" rx="20" fill="#eaf0f5" stroke="#b9c9d8" stroke-width="2"/>
+  <text x="1124" y="185" class="group">EXTRACTION GATEWAY</text>
+  <rect x="75" y="214" width="290" height="108" rx="12" class="box"/>
+  <text x="98" y="249" class="label">Authenticate &amp; ingest</text>
+  <text x="98" y="278" class="detail">PDF · image · text · email</text>
+  <text x="98" y="303" class="small">Loopback API + bounded uploads</text>
+  <rect x="420" y="214" width="330" height="108" rx="12" class="box"/>
+  <text x="445" y="249" class="label">Commit source &amp; job</text>
+  <text x="445" y="278" class="detail">PostgreSQL · SCRAM role</text>
+  <text x="445" y="303" class="small">Content deduplication + durable audit</text>
+  <path d="M365 268H420" class="flow"/>
+  <rect x="790" y="214" width="245" height="108" rx="12" class="box"/>
+  <text x="810" y="249" class="label">Redis signals</text>
+  <text x="810" y="278" class="detail">Bounded wakeup hints</text>
+  <text x="810" y="303" class="small">TTL worker heartbeats · auth</text>
+  <path d="M750 268H790" class="signal"/>
+  <text x="755" y="206" class="small">after commit</text>
+  <rect x="420" y="375" width="330" height="108" rx="12" class="box"/>
+  <text x="445" y="410" class="label">Claim &amp; extract</text>
+  <text x="445" y="439" class="detail">Separate worker · lease fencing</text>
+  <text x="445" y="464" class="small">Request bounded text over Unix socket</text>
+  <rect x="75" y="375" width="290" height="108" rx="12" fill="#fff7e7" stroke="#c9ab65" stroke-width="2"/>
+  <text x="98" y="410" class="label">Isolated parser</text>
+  <text x="98" y="439" class="detail">PDF · image · Tesseract OCR</text>
+  <text x="98" y="464" class="small">No network · no credentials</text>
+  <path d="M420 429H365" class="flow"/>
+  <path d="M220 322V375" class="flow"/>
+  <text x="82" y="351" class="small">Preview over local IPC</text>
+  <path d="M585 322V375" class="flow"/>
+  <text x="600" y="367" class="small">SQL polling survives Redis outage</text>
+  <path d="M912 322V348H750V400" class="signal"/>
+  <rect x="1124" y="232" width="252" height="134" rx="12" class="box"/>
+  <text x="1145" y="270" class="label">Schema extraction</text>
+  <text x="1145" y="301" class="detail">Authenticated HTTP gateway</text>
+  <text x="1145" y="330" class="detail">Existing Codex CLI account</text>
+  <path d="M750 429H1080V299H1124" class="flow"/>
+  <rect x="1124" y="400" width="252" height="114" rx="12" class="box"/>
+  <text x="1145" y="438" class="label">Bounded recovery</text>
+  <text x="1145" y="468" class="detail">Retry → dead letter → replay</text>
+  <text x="1145" y="493" class="small">Preserve the same job + audit</text>
+  <path d="M1250 366V400" class="signal"/>
+  <rect x="420" y="536" width="330" height="108" rx="12" class="box"/>
+  <text x="445" y="571" class="label">Verify business rules</text>
+  <text x="445" y="600" class="detail">Decimal math · dates · line items</text>
+  <text x="445" y="625" class="small">Vendor / invoice uniqueness</text>
+  <path d="M585 483V536" class="flow"/>
+  <rect x="75" y="536" width="290" height="108" rx="12" class="box"/>
+  <text x="98" y="571" class="label">Human decision</text>
+  <text x="98" y="600" class="detail">Edit · approve · reject · retry</text>
+  <text x="98" y="625" class="small">Recheck math before approval</text>
+  <path d="M420 590H365" class="flow"/>
+  <text x="78" y="516" class="small">uncertain or invalid fields</text>
+  <rect x="420" y="696" width="330" height="84" rx="12" class="box"/>
+  <text x="445" y="729" class="label">Register + outbox</text>
+  <text x="445" y="756" class="detail">One database transaction</text>
+  <path d="M585 644V696" class="flow"/>
+  <text x="605" y="680" class="small">safe → automatic</text>
+  <path d="M220 644V738H420" class="flow"/>
+  <text x="235" y="719" class="small">corrected + approved</text>
+  <rect x="790" y="696" width="245" height="84" rx="12" class="box"/>
+  <text x="810" y="729" class="label">Delivery adapter</text>
+  <text x="810" y="756" class="detail">Delivery + reconciliation</text>
+  <path d="M750 738H790" class="flow"/>
+  <rect x="60" y="842" width="1320" height="132" rx="14" fill="#182f37"/>
+  <text x="88" y="877" style="font-size:23px;font-weight:700;fill:#fff">Restart-safe state belongs to SQL; Redis only accelerates delivery.</text>
+  <text x="88" y="911" style="font-size:18px;fill:#d5e4df">API / worker: UID 10001 · read-only root · capabilities dropped · file-mounted secrets · independent health checks</text>
+  <text x="88" y="937" style="font-size:18px;fill:#d5e4df">Database / Redis: internal network only · persistent volumes · tested backup and recovery</text>
+  <text x="88" y="961" style="font-size:18px;fill:#d5e4df">Parser: network disabled · socket-only IPC · child memory / CPU / wall-time limits · read-only root · no secret mounts</text>
+</svg>
