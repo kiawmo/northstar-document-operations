@@ -16,7 +16,7 @@ pillow==13.0.0
 psycopg==3.3.6
 psycopg-binary==3.3.6
 pydantic==2.14.0
-pydantic-core==2.50.0
+pydantic-core==2.50.1
 pymupdf==1.28.2
 reportlab==5.0.1
 redis==6.4.0
